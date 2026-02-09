@@ -1,3 +1,4 @@
+
 # Frontend Notes
 
 ## JavaScript
@@ -55,7 +56,7 @@
   ```
 
 ### AbortController (cancel fetch)
-- `AbortController` can be used to cancel ongoing async operations like `fetch` requests. [web:92]
+- `AbortController` can be used to cancel ongoing async operations like `fetch` requests.
 - **Tiny example**
   ```js
   const controller = new AbortController();
@@ -70,7 +71,7 @@
 
   // cancel it
   controller.abort();
-  ``` 
+  ```
 
 ### Polyfills
 - Polyfills provide modern functionality to older browsers (by implementing missing features in JS).
@@ -104,7 +105,7 @@
 - A HOF takes one or more functions as arguments (and/or returns a function).
 - **Tiny example**
   ```js
-  const nums =  [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/87111142/c8821a17-1569-4441-b7c5-e857b84a004d/selected_image_8197209300891630239.jpg);
+  const nums =  [1,2,3,4];
   const doubled = nums.map(n => n * 2);
   ```
 
@@ -177,20 +178,139 @@
   ```
 
 ### CommonJS vs ES Modules (CJS vs ESM)
-- **CommonJS**: originally designed for server-side (Node.js), uses `require()` and `module.exports`, and loads modules synchronously. [web:89][web:90]
+- **CommonJS**: originally designed for server-side (Node.js), uses `require()` and `module.exports`, and loads modules synchronously.
 - **ES Modules**: standard module system, uses `import`/`export`, and is supported natively in modern browsers. [web:100]
 - **Tiny examples**
   ```js
   // CommonJS
   const fs = require("fs");
   module.exports = { x: 1 };
-  ``` [web:90]
+  ```
 
   ```js
   // ESM
   import thing from "./thing.js";
   export const x = 1;
-  ``` [web:100]
+  ```
+
+### Map vs plain Object
+- **Key type**
+  - `Map`: keys can be any value (objects, functions, primitives). [web:104]
+  - `Object`: keys are strings or symbols. [web:104]
+- **Key order**
+  - `Map`: maintains insertion order. [web:104]
+  - `Object`: property order rules exist but can be surprising; don’t rely on it as a strict “insertion-ordered map”. [web:108]
+- **Size**
+  - `Map`: has `.size`. [web:104]
+  - `Object`: no built-in `size` property (use `Object.keys(obj).length`). [web:116]
+- **Iteration**
+  - `Map`: `.forEach()`, `.keys()`, `.values()`, `.entries()` iterate in insertion order. [web:104]
+  - `Object`: commonly `for...in` or `Object.keys()` / `Object.entries()`. [web:117]
+- **Serialization**
+  - `Object`: JSON-serializable by default.
+  - `Map`: not directly JSON-serializable; convert first.
+- **Tiny example**
+  ```js
+  const m = new Map();
+  m.set({ id: 1 }, "objKey");
+  m.set(2, "numKey");
+  console.log(m.size); // 2
+
+  const obj = { a: 1, b: 2 };
+  console.log(Object.keys(obj).length); // 2
+  ``` [web:104][web:116]
+
+### Map vs WeakMap / Set vs WeakSet
+
+
+#### 1. Comparison Table
+
+| Feature | Map / Set | WeakMap / WeakSet |
+| :--- | :--- | :--- |
+| **Accepted Types** | Any (Primitive or Object) | **Objects Only** |
+| **Reference Type** | Strong (prevents GC) | Weak (allows GC) |
+| **Iterable?** | Yes (can loop through keys/values) | No |
+| **Size Property** | Yes (`.size`) | No |
+| **Primary Use Case** | General-purpose data storage | Memory-sensitive tagging/metadata |
+
+---
+
+#### 2. Map vs. WeakMap (Memory Management)
+
+The primary advantage of `WeakMap` is that it allows the **Garbage Collector (GC)** to free up memory if the object key is no longer referenced anywhere else.
+
+```javascript
+// --- Using a regular Map ---
+let userMap = new Map();
+let user = { name: "Alex" };
+
+userMap.set(user, "User Session Data");
+
+// Nulling the reference
+user = null; 
+
+// The object is STILL in memory because userMap holds a strong reference.
+console.log(userMap.size); // 1
+
+
+// --- Using a WeakMap ---
+let userWeakMap = new WeakMap();
+let activeUser = { name: "Sam" };
+
+userWeakMap.set(activeUser, "User Session Data");
+
+// Nulling the reference
+activeUser = null; 
+
+// The object is now eligible for Garbage Collection.
+// Once GC runs, the data is automatically removed from the WeakMap.
+```
+
+#### 3. Set vs. WeakSet (Practical Example)
+WeakSet is often used to "tag" objects or track unique instances without preventing those objects from being deleted.
+
+```javascript
+const visitedObjects = new WeakSet();
+
+function process(obj) {
+  if (visitedObjects.has(obj)) {
+    return; // Already processed
+  }
+
+  visitedObjects.add(obj);
+  // Perform some logic...
+}
+
+// When 'obj' is deleted or goes out of scope, it is 
+// automatically removed from visitedObjects.
+```
+
+### Iterators
+- Iterators define a sequence and return values one-by-one until completion. [web:118]
+- An iterator must implement `next()`, which returns an object like `{ value, done }`. [web:118]
+- **Tiny example**
+  ```js
+  const arr = ["x", "y"];
+  const it = arr[Symbol.iterator]();
+
+  console.log(it.next()); // { value: "x", done: false }
+  console.log(it.next()); // { value: "y", done: false }
+  console.log(it.next()); // { value: undefined, done: true }
+  ``` [web:118]
+
+### Generators
+- Generators can pause and resume execution; they return an iterator object. [web:111]
+- `yield` pauses execution and produces a value to the caller. [web:115]
+- **Tiny example**
+  ```js
+  function* gen() {
+    yield 1;
+    yield 2;
+    yield 3;
+  }
+
+  for (const n of gen()) console.log(n); // 1, 2, 3
+  ``` [web:111]
 
 ### Cookies vs localStorage vs sessionStorage
 - Cookies: sent to server with every request; small (~4KB).
@@ -326,13 +446,17 @@
   ```
 
 ### Flux pattern
-- Flux is an architectural pattern for managing state in apps (popular in the React ecosystem) and enforces one-directional data flow.
-- Core components:
-  - Dispatcher: manages actions and dispatches them to stores
-  - Stores: hold app state + logic
-  - Actions: payloads of info sent to dispatcher
-  - View: React components that re-render when stores update
-- Benefits: predictable state management (unidirectional flow), easier debugging/testing, clear separation of concerns.
+- Flux is an architectural pattern for managing state in apps and enforces one-directional data flow.
+- Core components: Dispatcher, Stores, Actions, View.
+- Benefits: predictable state management, improved debugging/testing, clear separation of concerns.
+
+### Presentational vs Container components
+- **Presentational components**: focus on how things look (render UI; mostly HTML/CSS).  
+- **Container components**: focus on how things work (logic, data fetching, state management).  
+- This separation helps keep the codebase clean and organized.
+
+### One-way data flow
+- In React, data typically flows **parent → child**, which makes behavior more predictable and improves maintainability.
 
 ---
 
