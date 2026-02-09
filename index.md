@@ -70,7 +70,7 @@
 
   // cancel it
   controller.abort();
-  ``` [web:92]
+  ``` 
 
 ### Polyfills
 - Polyfills provide modern functionality to older browsers (by implementing missing features in JS).
